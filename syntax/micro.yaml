@@ -1,0 +1,35 @@
+filetype: atmo
+
+detect:
+    filename: "\\.(atmo)$"
+
+rules:
+    - statement: "\\b(let)\\b"
+    - identifier: "[:space:]*\\b([0-9A-Za-z_]*)\\b"
+    - identifier: "\\b([0-9A-Za-z_]*)\\b[\\s]*[=]"
+    - type: "\\b(string|integer|float|bool|word)\\b"
+    - functions: "\\@[0-9A-Za-z]+"
+    
+    - constant.string:
+        start: "\""
+        end: "\""
+        skip: "\\\\."
+        rules:
+            - constant.specialChar: "\\\\([\"'abfnrtv\\\\]|[0-3]?[0-7]{1,2}|x[0-9A-Fa-f]{1,2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})"
+
+    - symbol.operator: "[=]"
+
+    - constant.number: "\\b([0-9.]*)\\b"
+    - constant.bool: "\\b(true|false)\\b"
+    
+    - comment:
+        start: "//"
+        end: "$"
+        rules:
+            - todo: "(TODO|XXX|FIXME):?"
+
+    - comment:
+        start: "/\\*"
+        end: "\\*/"
+        rules:
+            - todo: "(TODO|XXX|FIXME):?"

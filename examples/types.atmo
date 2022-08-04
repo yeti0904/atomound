@@ -1,0 +1,12 @@
+@main
+	let integer myint = 5
+	let float myfloat = 5.0
+	let bool mybool = true
+	let string mystring = "hello"
+	let word myword = 5
+
+	print "int: " myint
+	print "float: " myfloat
+	print "bool: " mybool
+	print "string: " mystring
+	print "word: " myword
