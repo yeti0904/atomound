@@ -39,7 +39,7 @@ void Language::LanguageComponents::RegisterFunction(Function function) {
 }
 
 void Language::LanguageComponents::JumpToLabel(std::string name) {
-	for (size_t j = 0; i < tokens.size(); ++j) {
+	for (size_t j = 0; j < tokens.size(); ++j) {
 		if ((tokens[j].type == Lexer::TokenType::Label) && (tokens[j].content == name)) {
 			i = j;
 			return;
