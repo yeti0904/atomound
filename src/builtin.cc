@@ -214,7 +214,12 @@ void BuiltIn::Include(Language::LanguageComponents& lc) {
 	}
 
 	std::string fileName = std::get <std::string>(toInclude.value);
-	fileName = Util::DirName(lc.fileName) + "/" + fileName;
+	if (fileName[0] != '/') {
+		fileName = Util::DirName(lc.fileName) + "/" + fileName;
+	}
+	else if (fileName.substr(0, 2) == "g:") {
+		fileName = "/usr/include/atmo/" + fileName;
+	}
 
 	std::string code = FS::File::Read(fileName);
 	std::vector <Lexer::Token> tokens = Lexer::Lex(code, fileName);
@@ -406,4 +411,46 @@ void BuiltIn::CharToAscii(Language::LanguageComponents& lc) {
 	ret.type = Language::Type::Integer;
 	ret.value = (int32_t) std::get <std::string>(ch.value)[0];
 	lc.returnValues.push_back(ret);
+}
+
+void BuiltIn::StrResize(Language::LanguageComponents& lc) {
+	if (lc.passStack.empty()) {
+		fprintf(stderr, "[ERROR] StrResize: Expected 2 arguments\n");
+		exit(EXIT_FAILURE);
+	}
+	Language::Variable size = lc.passStack.back();
+	lc.passStack.pop_back();
+	Language::Variable str = lc.passStack.back();
+	lc.passStack.pop_back();
+
+	if (str.type != Language::Type::String) {
+		fprintf(
+			stderr, "[ERROR] StrResize: Expected string as 1st arg, got %s\n",
+			Language::TypeToString(str.type)
+		);
+		exit(EXIT_FAILURE);
+	}
+
+	size_t newSize = 0;
+	switch (size.type) {
+		case Language::Type::Integer: {
+			newSize = std::get <int32_t>(size.value);
+			break;
+		}
+		case Language::Type::Word: {
+			newSize = std::get <size_t>(size.value);
+			break;
+		}
+		default: {
+			fprintf(
+				stderr, "[ERROR] StrResize: Expected integer/word as 2nd arg, got %s\n",
+				Language::TypeToString(size.type)
+			);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	str.value = std::get <std::string>(str.value).resize(newSize, ' ');
+
+	lc.returnValues.push_back(str);
 }

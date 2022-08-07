@@ -19,4 +19,5 @@ namespace BuiltIn {
 	void GetChar(Language::LanguageComponents& lc);
 	void Unpass(Language::LanguageComponents& lc);
 	void CharToAscii(Language::LanguageComponents& lc);
+	void StrResize(Language::LanguageComponents& lc);
 }

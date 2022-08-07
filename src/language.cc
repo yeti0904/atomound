@@ -40,6 +40,7 @@ Language::LanguageComponents::LanguageComponents() {
 	RegisterFunction({"get_char",      BuiltIn::GetChar});
 	RegisterFunction({"unpass",        BuiltIn::Unpass});
 	RegisterFunction({"char_to_ascii", BuiltIn::CharToAscii});
+	RegisterFunction({"str_resize",    BuiltIn::StrResize});
 }
 
 void Language::LanguageComponents::Init
