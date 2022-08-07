@@ -426,7 +426,7 @@ void BuiltIn::StrResize(Language::LanguageComponents& lc) {
 	if (str.type != Language::Type::String) {
 		fprintf(
 			stderr, "[ERROR] StrResize: Expected string as 1st arg, got %s\n",
-			Language::TypeToString(str.type)
+			Language::TypeToString(str.type).c_str()
 		);
 		exit(EXIT_FAILURE);
 	}
@@ -444,13 +444,18 @@ void BuiltIn::StrResize(Language::LanguageComponents& lc) {
 		default: {
 			fprintf(
 				stderr, "[ERROR] StrResize: Expected integer/word as 2nd arg, got %s\n",
-				Language::TypeToString(size.type)
+				Language::TypeToString(size.type).c_str()
 			);
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	str.value = std::get <std::string>(str.value).resize(newSize, ' ');
+	std::string toResize = std::get <std::string>(str.value);
+
+	Language::Variable ret;
+	ret.type = Language::Type::String;
+	toResize.resize(newSize, ' ');
+	ret.value = toResize;
 
 	lc.returnValues.push_back(str);
 }
