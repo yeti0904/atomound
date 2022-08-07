@@ -1,2 +1,4 @@
-# Atomound documentation
-welcome to the Atomound documentation!
+Atomound documentation
+======================
+
+welcome to atomound documentation
