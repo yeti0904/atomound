@@ -5,6 +5,7 @@ namespace Lexer {
 	enum class TokenType {
 		Label = 0,
 		FunctionCall,
+		FunctionOrIdentifier,
 		String,
 		Integer,
 		Float,

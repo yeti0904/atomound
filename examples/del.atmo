@@ -1,0 +1,5 @@
+@main
+	let string msg = "hello\n"
+	print msg
+	del msg
+	print msg // will error

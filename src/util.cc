@@ -55,3 +55,11 @@ std::string Util::BaseName(std::string path) {
 	}
 	return path.substr(pos + 1);
 }
+
+std::string Util::DirName(std::string path) {
+	size_t pos = path.rfind('/');
+	if (pos == std::string::npos) {
+		return path;
+	}
+	return path.substr(0, pos);
+}

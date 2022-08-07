@@ -2,4 +2,4 @@
 #include "_components.hh"
 #include "language.hh"
 
-void Interpret(Language::LanguageComponents& lc);
+void Interpret(Language::LanguageComponents& lc, bool exitOnReturn);

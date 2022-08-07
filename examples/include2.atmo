@@ -1,0 +1,7 @@
+goto end
+
+@hello
+	print "hello\n"
+	return
+	
+@end

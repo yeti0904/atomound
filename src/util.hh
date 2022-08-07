@@ -6,4 +6,5 @@ namespace Util {
 	bool        IsFloat(std::string str);
 	bool        IsBool(std::string str);
 	std::string BaseName(std::string path);
+	std::string DirName(std::string path);
 }

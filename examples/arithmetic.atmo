@@ -1,0 +1,19 @@
+@main
+	let integer result = 0
+	
+	result = add 2 2
+	print "2 + 2 = " result "\n"
+	
+	result = sub 4 1
+	print "4 - 1 = " result "\n"
+	
+	result = mul 8 32
+	print "8 * 32 = " result "\n"
+	
+	result = div 64 8
+	print "64 / 8 = " result "\n"
+
+	result = mod 68 7
+	print "64 % 7 = " result "\n"
+	
+	exit 0

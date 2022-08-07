@@ -4,11 +4,11 @@ detect:
     filename: "\\.(atmo)$"
 
 rules:
-    - statement: "\\b(let)\\b"
-    - identifier: "[:space:]*\\b([0-9A-Za-z_]*)\\b"
-    - identifier: "\\b([0-9A-Za-z_]*)\\b[\\s]*[=]"
+    - statement: "\\b(let|del)\\b"
+    #- identifier: "\\b[[:space:]]+[0-9A-Za-z_]*\\b"
+    #- identifier: "\\b([0-9A-Za-z_]*)\\b[\\s]*[=]"
     - type: "\\b(string|integer|float|bool|word)\\b"
-    - functions: "\\@[0-9A-Za-z]+"
+    - functions: "\\@[0-9A-Za-z:]+"
     
     - constant.string:
         start: "\""

@@ -5,6 +5,7 @@
 #include "util.hh"
 #include "language.hh"
 #include "interpreter.hh"
+#include "repl.hh"
 
 App::App(int argc, char** argv) {
 	for (int i = 0; i < argc; ++i) {
@@ -40,6 +41,14 @@ App::App(int argc, char** argv) {
 			}
 		}
 	}
+	else {
+		// run repl
+		Repl();
+	}
+
+	if (!FS::File::Exists(programPath)) {
+		fprintf(stderr, "[ERROR] No such file: %s\n", programPath.c_str());
+	}
 
 	std::string                code = FS::File::Read(programPath);
 	std::vector <Lexer::Token> tokens = Lexer::Lex(code, Util::BaseName(programPath));
@@ -54,8 +63,8 @@ App::App(int argc, char** argv) {
 	}
 
 	Language::LanguageComponents lc;
-	lc.Init(tokens);
+	lc.Init(tokens, programPath);
 	lc.JumpToLabel("main");
 
-	Interpret(lc);
+	Interpret(lc, false);
 }

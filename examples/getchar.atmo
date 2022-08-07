@@ -1,0 +1,5 @@
+@main
+	let string mystr = "hello world"
+	print mystr "\n"
+	let string char = get_char mystr 0
+	print char "\n"

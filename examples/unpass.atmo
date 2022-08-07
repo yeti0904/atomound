@@ -1,0 +1,19 @@
+@strlen
+	let string str = unpass
+	let integer i = 0
+	@:loop
+		let string ch = get_char str i
+		let integer int = char_to_ascii ch
+		is_equal int 0
+		del ch
+		del int
+		goto_if :done
+		i = add i 1
+		goto :loop
+	@:done
+		return i
+
+@main
+	let string mystr = "hello"
+	let integer len = strlen mystr
+	print "length of " mystr " is " len "\n"

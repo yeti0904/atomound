@@ -1,5 +1,6 @@
 #include "language.hh"
 #include "builtin.hh"
+#include "interpreter.hh"
 
 Language::Type Language::StringToType(std::string type) {
 	if (type == "string")  return Language::Type::String;
@@ -23,15 +24,44 @@ std::string Language::TypeToString(Language::Type type) {
 }
 
 Language::LanguageComponents::LanguageComponents() {
-	RegisterFunction({"print",  BuiltIn::Print});
-	RegisterFunction({"return", BuiltIn::Return});
-	RegisterFunction({"exit",   BuiltIn::Exit});
-	RegisterFunction({"goto",   BuiltIn::Goto});
+	RegisterFunction({"print",         BuiltIn::Print});
+	RegisterFunction({"return",        BuiltIn::Return});
+	RegisterFunction({"exit",          BuiltIn::Exit});
+	RegisterFunction({"goto",          BuiltIn::Goto});
+	RegisterFunction({"sleep",         BuiltIn::Sleep});
+	RegisterFunction({"add",           BuiltIn::Add});
+	RegisterFunction({"sub",           BuiltIn::Sub});
+	RegisterFunction({"mul",           BuiltIn::Mul});
+	RegisterFunction({"div",           BuiltIn::Div});
+	RegisterFunction({"mod",           BuiltIn::Mod});
+	RegisterFunction({"include",       BuiltIn::Include});
+	RegisterFunction({"goto_if",       BuiltIn::GotoIf});
+	RegisterFunction({"is_equal",      BuiltIn::IsEqual});
+	RegisterFunction({"get_char",      BuiltIn::GetChar});
+	RegisterFunction({"unpass",        BuiltIn::Unpass});
+	RegisterFunction({"char_to_ascii", BuiltIn::CharToAscii});
 }
 
-void Language::LanguageComponents::Init(std::vector <Lexer::Token> p_tokens) {
-	tokens = p_tokens;
-	i      = 0;
+void Language::LanguageComponents::Init
+(std::vector <Lexer::Token> p_tokens, std::string p_fileName) {
+	tokens   = p_tokens;
+	i        = 0;
+	fileName = p_fileName;
+
+	/*tokens.push_back({
+		Lexer::TokenType::FunctionCall,
+		"exit",
+		0, 0
+	});
+	tokens.push_back({
+		Lexer::TokenType::Integer,
+		"0",
+		0, 0
+	});
+	tokens.push_back({
+		Lexer::TokenType::End,
+		"", 0, 0
+	});*/
 }
 
 void Language::LanguageComponents::RegisterFunction(Function function) {
@@ -73,6 +103,20 @@ void Language::LanguageComponents::AddVariable(Language::Variable variable) {
 	variables.push_back(variable);
 }
 
+void Language::LanguageComponents::DeleteVariable(std::string name) {
+	for (auto i = variables.begin(); i < variables.end(); ++i) {
+		if (i->name == name) {
+			variables.erase(i);
+			return;
+		}
+	}
+	fprintf(
+		stderr, "[ERROR] Tried to remove undefined variable %s\n",
+		name.c_str()
+	);
+	exit(EXIT_FAILURE);
+}
+
 bool Language::LanguageComponents::VariableExists(std::string name) {
 	for (auto& var : variables) {
 		if (var.name == name) {
@@ -92,9 +136,28 @@ bool Language::LanguageComponents::LabelExists(std::string name) {
 }
 
 size_t Language::LanguageComponents::GetLabel(std::string name) {
-	for (size_t i = 0; i < tokens.size(); ++i) {
-		if ((tokens[i].type == Lexer::TokenType::Label) && (tokens[i].content == name)) {
-			return i;
+	size_t j = i;
+	if (name[0] == ':') {
+		// sub-label
+		while (true) {
+			if (
+				(tokens[j].type == Lexer::TokenType::Label) &&
+				(tokens[j].content[0] != ':')
+			) {
+				break;
+			}
+		}
+	}
+	// first try starting at i
+	for (; j < tokens.size(); ++j) {
+		if ((tokens[j].type == Lexer::TokenType::Label) && (tokens[j].content == name)) {
+			return j;
+		}
+	}
+	
+	for (size_t j = 0; j < tokens.size(); ++j) {
+		if ((tokens[j].type == Lexer::TokenType::Label) && (tokens[j].content == name)) {
+			return j;
 		}
 	}
 	fprintf(stderr, "[ERROR] Tried to get non-existent label %s\n", name.c_str());
@@ -133,16 +196,38 @@ void Language::LanguageComponents::CreateVariable(Type type, std::string name) {
 	variables.push_back(newVar);
 }
 
+void Language::LanguageComponents::CallCXXFunction(std::string name) {
+	for (auto& func : functions) {
+		if (func.name == name) {
+			func.function(*this);
+			return;
+		}
+	}
+	fprintf(stderr, "[ERROR] Tried to call undefined funtcion %s\n", name.c_str());
+	exit(EXIT_FAILURE);
+}
+
+bool Language::LanguageComponents::CXXFunctionExists(std::string name) {
+	for (auto& func : functions) {
+		if (func.name == name) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void
-Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token token) {
+Language::LanguageComponents::AssignVariable(std::string name) {
 	Language::Variable newVar = GetVariable(name);
+	auto& token = tokens[i];
 	switch (token.type) {
 		case Lexer::TokenType::String: {
 			if (newVar.type != Language::Type::String) {
 				fprintf(
 					stderr,
-					"[ERROR] Type error at %i:%i: "
+					"[ERROR] Type error at %s:%i:%i: "
 					"rvalue doesnt match type of lvalue\n",
+					fileName.c_str(),
 					(int) token.line,
 					(int) token.column
 				);
@@ -158,8 +243,9 @@ Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token toke
 			) {
 				fprintf(
 					stderr,
-					"[ERROR] Type error at %i:%i: "
+					"[ERROR] Type error at %s:%i:%i: "
 					"rvalue doesnt match type of lvalue\n",
+					fileName.c_str(),
 					(int) token.line,
 					(int) token.column
 				);
@@ -182,8 +268,9 @@ Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token toke
 			if (newVar.type != Language::Type::Float) {
 				fprintf(
 					stderr,
-					"[ERROR] Type error at %i:%i: "
+					"[ERROR] Type error at %s:%i:%i: "
 					"rvalue doesnt match type of lvalue\n",
+					fileName.c_str(),
 					(int) token.line,
 					(int) token.column
 				);
@@ -196,8 +283,9 @@ Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token toke
 			if (newVar.type != Language::Type::Bool) {
 				fprintf(
 					stderr,
-					"[ERROR] Type error at %i:%i: "
+					"[ERROR] Type error at %s:%i:%i: "
 					"rvalue doesnt match type of lvalue\n",
+					fileName.c_str(),
 					(int) token.line,
 					(int) token.column
 				);
@@ -206,26 +294,61 @@ Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token toke
 			newVar.value = token.content == "true";
 			break;
 		}
-		case Lexer::TokenType::Identifier: {
-			Language::Variable set =
-				GetVariable(token.content);
-			if (set.type != newVar.type) {
-				fprintf(
-					stderr,
-					"[ERROR] Type error at %i:%i: "
-					"rvalue doesnt match type of lvalue\n",
-					(int) token.line,
-					(int) token.column
-				);
-				exit(EXIT_FAILURE);
+		case Lexer::TokenType::FunctionOrIdentifier: {
+			if (LabelExists(token.content) || CXXFunctionExists(token.content)) {
+				// function
+				//if (LabelExists(token.content)) puts("label");
+				//if (CXXFunctionExists(token.content)) puts("function");
+				FunctionCall();
+				if (returnValues.empty()) {
+					fprintf(
+						stderr,
+						"[ERROR] No value to assign at %s:%i:%i (function returned nothing)\n",
+						fileName.c_str(),
+						(int) token.line,
+						(int) token.column
+					);
+					exit(EXIT_FAILURE);
+				}
+				Language::Variable ret = returnValues.back();
+				returnValues.pop_back();
+				if (ret.type != newVar.type) {
+					fprintf(
+						stderr,
+						"[ERROR] Return value doesnt match type of lvalue at %s:%i:%i\n",
+						fileName.c_str(),
+						(int) token.line,
+						(int) token.column
+					);
+					exit(EXIT_FAILURE);
+				}
+				newVar      = ret;
+				newVar.name = name;
 			}
-			newVar = set;
+			else { // identifier
+				Language::Variable set =
+					GetVariable(token.content);
+				if (set.type != newVar.type) {
+					fprintf(
+						stderr,
+						"[ERROR] Type error at %s:%i:%i: "
+						"rvalue doesnt match type of lvalue\n",
+						fileName.c_str(),
+						(int) token.line,
+						(int) token.column
+					);
+					exit(EXIT_FAILURE);
+				}
+				newVar = set;
+				newVar.name = name;
+			}
 			break;
 		}
 		default: {
 			fprintf(
-				stderr, "[ERROR] Unexpected token %s at %i:%i\n",
+				stderr, "[ERROR] (1) Unexpected token %s at %s:%i:%i\n",
 				Lexer::TypeAsString(token).c_str(),
+				fileName.c_str(),
 				(int) token.line,
 				(int) token.column
 			);
@@ -234,4 +357,118 @@ Language::LanguageComponents::AssignVariable(std::string name, Lexer::Token toke
 	}
 
 	SetVariable(newVar);
+}
+
+void Language::LanguageComponents::FunctionCall() {
+	auto& token = tokens[i];
+	while (tokens[i].type != Lexer::TokenType::End) {
+		Language::Variable toPush;
+		++ i;
+		if (tokens[i].type == Lexer::TokenType::End) {
+			break;
+		}
+		switch (tokens[i].type) {
+			case Lexer::TokenType::String: {
+				toPush.type  = Language::Type::String;
+				toPush.value = tokens[i].content;
+				break;
+			}
+			case Lexer::TokenType::Integer: {
+				toPush.type  = Language::Type::Integer;
+				toPush.value = std::stoi(tokens[i].content);
+				break;
+			}
+			case Lexer::TokenType::Float: {
+				toPush.type  = Language::Type::Float;
+				toPush.value = std::stod(tokens[i].content);
+				break;
+			}
+			case Lexer::TokenType::Bool: {
+				toPush.type  = Language::Type::Bool;
+				toPush.value = tokens[i].content == "true";
+				break;
+			}
+			case Lexer::TokenType::Identifier: {
+				if (VariableExists(tokens[i].content)) {
+					Language::Variable var =
+						GetVariable(tokens[i].content);
+					toPush = var;
+				}
+				else if (LabelExists(tokens[i].content)) {
+					toPush.type  = Language::Type::Word;
+					toPush.value = GetLabel(tokens[i].content);
+				}
+				else {
+					fprintf(
+						stderr,
+						"[ERROR] Referenced undefined variable/label %s at %s:%i:%i\n",
+						tokens[i].content.c_str(),
+						fileName.c_str(),
+						(int) tokens[i].line,
+						(int) tokens[i].column
+					);
+					exit(EXIT_FAILURE);
+				}
+				break;
+			}
+			default: {
+				printf("%i\n", (int) i);
+				fprintf(
+					stderr, "[ERROR] (2) Unexpected token %s at %s:%i:%i\n",
+					Lexer::TypeAsString(token).c_str(),
+					fileName.c_str(),
+					(int) tokens[i].line,
+					(int) tokens[i].column
+				);
+				exit(EXIT_FAILURE);
+			}
+		}
+
+		passStack.push_back(toPush);
+	}
+
+	bool               functionExists = false;
+	bool               cxxFunction    = false;
+	if (CXXFunctionExists(token.content)) {
+		functionExists = true;
+		cxxFunction    = true;
+	}
+	else if (LabelExists(token.content)) {
+		functionExists = true;
+	}
+	if (!functionExists) {
+		fprintf(
+			stderr,
+			"[ERROR] Referenced undefined function %s at %s:%i:%i\n",
+			token.content.c_str(),
+			fileName.c_str(),
+			(int) tokens[i].line,
+			(int) tokens[i].column
+		);
+		exit(EXIT_FAILURE);
+	}
+
+	if (cxxFunction) {
+		//puts("cxxFunction");
+		CallCXXFunction(token.content);
+	}
+	else {
+		//puts("label function");
+		returnStack.push_back(i);
+		//printf("jumping from %i to %i\n", (int) i, (int) labelPos);
+		JumpToLabel(token.content);
+		Interpret(*this, true);
+	}
+}
+
+void Language::LanguageComponents::CopyNewLC(LanguageComponents& lc) {
+	for (auto& var : lc.variables) {
+		variables.push_back(var);
+	}
+	for (auto& function : lc.functions) {
+		functions.push_back(function);
+	}
+	for (auto& token : lc.tokens) {
+		tokens.push_back(token);
+	}
 }

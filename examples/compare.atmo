@@ -1,0 +1,9 @@
+@main
+	let integer result = add 2 2
+	is_equal result 5
+	goto_if :equal
+	exit 0
+	@:equal
+		print "result is 4\n"
+		exit 0
+		

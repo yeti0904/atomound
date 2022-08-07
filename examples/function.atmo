@@ -1,0 +1,9 @@
+@myfunc
+	print "hello\n"
+	return 5
+
+@main
+	let integer myint = myfunc
+	let integer myotherint = myint
+	print myint "\n"
+	print myotherint "\n"

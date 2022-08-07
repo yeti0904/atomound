@@ -3,7 +3,7 @@
 #include "util.hh"
 
 std::vector <Lexer::Token> Lexer::Lex(std::string code, std::string fname) {
-	size_t                     line   = 0;
+	size_t                     line   = 1;
 	size_t                     column = 1;
 	std::vector <Lexer::Token> ret;
 	std::string                reading;
@@ -14,6 +14,7 @@ std::vector <Lexer::Token> Lexer::Lex(std::string code, std::string fname) {
 			while (code[i] != '\n') {
 				++ i;
 			}
+			++ line;
 		}
 		if (code[i] == '\n') {
 			++ line;
@@ -143,7 +144,7 @@ std::vector <Lexer::Token> Lexer::Lex(std::string code, std::string fname) {
 					continue;
 				}
 				else if (
-					(ret.back().type == Lexer::TokenType::Keyword) ||
+					(ret.back().type == Lexer::TokenType::Keyword) &&
 					(ret.back().content == "let")
 				) {
 					ret.push_back({
@@ -188,11 +189,23 @@ std::vector <Lexer::Token> Lexer::Lex(std::string code, std::string fname) {
 						reading = "";
 					}
 					else {
-						ret.push_back({
-							Lexer::TokenType::Identifier,
-							reading,
-							line, column
-						});
+						if (
+							!ret.empty() &&
+							(ret.back().type == Lexer::TokenType::Equals)
+						) {
+							ret.push_back({
+								Lexer::TokenType::FunctionOrIdentifier,
+								reading,
+								line, column
+							});
+						}
+						else {
+							ret.push_back({
+								Lexer::TokenType::Identifier,
+								reading,
+								line, column
+							});
+						}
 						reading = "";
 					}
 				}
@@ -221,17 +234,18 @@ std::vector <Lexer::Token> Lexer::Lex(std::string code, std::string fname) {
 
 std::string Lexer::TypeAsString(Token token) {
 	switch (token.type) {
-		case Lexer::TokenType::Label:        return "label";
-		case Lexer::TokenType::FunctionCall: return "functionCall";
-		case Lexer::TokenType::String:       return "string";
-		case Lexer::TokenType::Integer:      return "integer";
-		case Lexer::TokenType::Float:        return "float";
-		case Lexer::TokenType::Identifier:   return "identifier";
-		case Lexer::TokenType::Bool:         return "bool";
-		case Lexer::TokenType::Keyword:      return "keyword";
-		case Lexer::TokenType::Type:         return "type";
-		case Lexer::TokenType::Equals:       return "equals";
-		case Lexer::TokenType::End:          return "end";
+		case Lexer::TokenType::Label:                return "label";
+		case Lexer::TokenType::FunctionCall:         return "functionCall";
+		case Lexer::TokenType::FunctionOrIdentifier: return "labelOrIdentifier";
+		case Lexer::TokenType::String:               return "string";
+		case Lexer::TokenType::Integer:              return "integer";
+		case Lexer::TokenType::Float:                return "float";
+		case Lexer::TokenType::Identifier:           return "identifier";
+		case Lexer::TokenType::Bool:                 return "bool";
+		case Lexer::TokenType::Keyword:              return "keyword";
+		case Lexer::TokenType::Type:                 return "type";
+		case Lexer::TokenType::Equals:               return "equals";
+		case Lexer::TokenType::End:                  return "end";
 	}
 	return "error";
 }
