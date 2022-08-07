@@ -1,0 +1,6 @@
+@main
+	let string str = "hello\n"
+	print str
+	str = set_char str 0 "H"
+	print str
+	exit 0

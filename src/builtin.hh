@@ -17,6 +17,7 @@ namespace BuiltIn {
 	void GotoIf(Language::LanguageComponents& lc);
 	void IsEqual(Language::LanguageComponents& lc);
 	void GetChar(Language::LanguageComponents& lc);
+	void SetChar(Language::LanguageComponents& lc);
 	void Unpass(Language::LanguageComponents& lc);
 	void CharToAscii(Language::LanguageComponents& lc);
 	void StrResize(Language::LanguageComponents& lc);

@@ -38,6 +38,7 @@ Language::LanguageComponents::LanguageComponents() {
 	RegisterFunction({"goto_if",       BuiltIn::GotoIf});
 	RegisterFunction({"is_equal",      BuiltIn::IsEqual});
 	RegisterFunction({"get_char",      BuiltIn::GetChar});
+	RegisterFunction({"set_char",      BuiltIn::SetChar});
 	RegisterFunction({"unpass",        BuiltIn::Unpass});
 	RegisterFunction({"char_to_ascii", BuiltIn::CharToAscii});
 	RegisterFunction({"str_resize",    BuiltIn::StrResize});

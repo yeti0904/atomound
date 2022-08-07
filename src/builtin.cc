@@ -384,6 +384,75 @@ void BuiltIn::GetChar(Language::LanguageComponents& lc) {
 	lc.returnValues.push_back(ret);
 }
 
+void BuiltIn::SetChar(Language::LanguageComponents& lc) {
+	if (lc.passStack.empty()) {
+		fprintf(stderr, "[ERROR] GetChar: Expected 2 arguments of type string, integer\n");
+		exit(EXIT_FAILURE);
+	}
+
+	Language::Variable newCharVar = lc.passStack.back();
+	lc.passStack.pop_back();
+	if (newCharVar.type != Language::Type::String) {
+		fprintf(
+			stderr, "[ERROR] SetChar: Expected String as 3rd argument, got %s\n",
+			Language::TypeToString(newCharVar.type).c_str()
+		);
+		exit(EXIT_FAILURE);
+	}
+	char newCh = std::get <std::string>(newCharVar.value)[0];
+
+	Language::Variable index = lc.passStack.back();
+	lc.passStack.pop_back();
+	if (
+		(index.type != Language::Type::Word) &&
+		(index.type != Language::Type::Integer)
+	) {
+		fprintf(
+			stderr, "[ERROR] GetChar: Expected Word as 2nd argument, got %s\n",
+			Language::TypeToString(index.type).c_str()
+		);
+		exit(EXIT_FAILURE);
+	}
+
+	if (lc.passStack.empty()) {
+		fprintf(stderr, "[ERROR] GetChar: Expected 2 arguments of type string, integer\n");
+		exit(EXIT_FAILURE);
+	}
+
+	Language::Variable str = lc.passStack.back();
+	lc.passStack.pop_back();
+
+	if (str.type != Language::Type::String) {
+		fprintf(
+			stderr, "[ERROR] Expected String as first argument, got %s\n",
+			Language::TypeToString(str.type).c_str()
+		);
+		exit(EXIT_FAILURE);
+	}
+
+	size_t indexValue = 0;
+	switch (index.type) {
+		case Language::Type::Integer: {
+			indexValue = (size_t) std::get <int32_t>(index.value);
+			break;
+		}
+		case Language::Type::Word: {
+			indexValue = std::get <size_t>(index.value);
+			break;
+		}
+		default: break;
+	}
+
+	std::string strValue = std::get <std::string>(str.value);
+	strValue[indexValue] = newCh;
+
+	Language::Variable ret;
+	ret.type = Language::Type::String;
+	ret.value = strValue;
+
+	lc.returnValues.push_back(ret);
+}
+
 void BuiltIn::Unpass(Language::LanguageComponents& lc) {
 	if (lc.passStack.empty()) {
 		fprintf(stderr, "[ERROR] Unpass: Nothing to pop out of pass stack\n");
